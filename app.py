@@ -114,4 +114,4 @@ def handle_delete_order(data):
     socketio.emit('order_deleted', {'order_id': data['order_id']})
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True, port=5000)
+    socketio.run(app, debug=True, port=8080)
