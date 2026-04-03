@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cashier Login – GAD جاد</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root { --gold:#FFD700; --primary:#3B3FA0; --primary-dark:#2d3180; --accent:#D93025; --bg:#FFD700; --card:#fff; --text:#1a1a2e; --muted:#7a7a9a; --red:#D93025; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family:'Cairo',sans-serif; background:var(--bg); background-image:radial-gradient(ellipse at 50% 30%, rgba(59,63,160,.08) 0%, transparent 70%); color:var(--text);
+  min-height:100vh; display:flex; align-items:center; justify-content:center;
+  background-image: radial-gradient(ellipse at 50% 0%, rgba(245,197,24,.06) 0%, transparent 60%);
+}
+.box {
+  background:var(--card); border:3px solid var(--primary); border-radius:20px;
+  padding:48px 40px; width:min(420px,92vw); text-align:center;
+  box-shadow:0 20px 60px rgba(59,63,160,.25);
+}
+.logo { font-size:3rem; margin-bottom:8px; }
+h1 { font-size:1.6rem; font-weight:900; color:var(--primary); }
+.sub { color:var(--primary); opacity:.6; font-size:.85rem; margin-bottom:36px; }
+.field { display:flex; flex-direction:column; gap:6px; margin-bottom:18px; text-align:right; }
+label { font-size:.85rem; color:var(--muted); }
+input {
+  padding:13px 16px; border-radius:12px; border:1.5px solid rgba(59,63,160,.25);
+  background:#f8f8ff; color:var(--text); font-family:'Cairo',sans-serif;
+  font-size:1rem; outline:none; transition:border .2s; text-align:right;
+}
+input:focus { border-color:var(--primary); }
+.error { background:rgba(217,48,37,.1); border:1px solid var(--accent); color:var(--accent); border-radius:10px; padding:10px 14px; font-size:.88rem; margin-bottom:14px; }
+.btn {
+  width:100%; padding:14px; border-radius:12px; background:var(--primary); color:#fff;
+  border:none; font-family:'Cairo',sans-serif; font-weight:800; font-size:1.05rem;
+  cursor:pointer; transition:.2s; margin-top:8px;
+}
+.btn:hover { background:var(--primary-dark); }
+.back { margin-top:20px; font-size:.82rem; color:var(--muted); }
+.back a { color:var(--primary); text-decoration:none; }
+</style>
+</head>
+<body>
+<div class="box">
+  <img src="/static/logo.jpg" alt="GAD" style="height:72px;border-radius:12px;border:3px solid var(--primary);margin-bottom:12px;">
+  <h1>بوابة الكاشير 🔐</h1>
+  <p class="sub">Cashtarhar – GAD جاد – للموظفين فقط</p>
+  {% if error %}
+  <div class="error">⚠️ {{ error }}</div>
+  {% endif %}
+  <form method="POST">
+    <div class="field">
+      <label>اسم المستخدم</label>
+      <input type="text" name="username" placeholder="username" autocomplete="off" required>
+    </div>
+    <div class="field">
+      <label>كلمة المرور</label>
+      <input type="password" name="password" placeholder="••••" required>
+    </div>
+    <button class="btn" type="submit">دخول ←</button>
+  </form>
+  <div class="back"><a href="/">← رجوع للمنيو</a></div>
+</div>
+</body>
+</html>
