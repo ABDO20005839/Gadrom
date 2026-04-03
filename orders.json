@@ -1,0 +1,34 @@
+[
+  {
+    "id": 1,
+    "customer_name": "‪Abdelrahman Ahmed‬‏",
+    "items": [
+      {
+        "id": 1,
+        "name": "عرض الأحد للثلاثاء",
+        "price": 275,
+        "qty": 2,
+        "emoji": "🍗"
+      }
+    ],
+    "total": 550,
+    "time": "2026-04-03 01:17:00",
+    "status": "done"
+  },
+  {
+    "id": 2,
+    "customer_name": "هيام رمضان",
+    "items": [
+      {
+        "id": 4,
+        "name": "فلاش القرمشة",
+        "price": 185,
+        "qty": 2,
+        "emoji": "⏳"
+      }
+    ],
+    "total": 370,
+    "time": "2026-04-03 01:19:25",
+    "status": "done"
+  }
+]
