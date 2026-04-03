@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bazooka Chicken – اطلب دلوقتي</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<style>
+:root {
+  --gold: #FFD700; --gold-dark: #e6c200;
+  --primary: #3B3FA0; --primary-dark: #2d3180;
+  --accent: #D93025; --accent-dark: #b8271e;
+  --bg: #FFF8DC; --card: #FFFDE7; --card2: #FFF9C4;
+  --text: #1a1a2e; --muted: #7a7a9a;
+  --green: #2dc653; --red: #D93025;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Cairo',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; background-image: repeating-linear-gradient(45deg, rgba(59,63,160,0.03) 0px, rgba(59,63,160,0.03) 1px, transparent 1px, transparent 12px); }
+
+/* HEADER */
+header {
+  background:linear-gradient(135deg,#FFD700 0%,#FFE033 100%);
+  border-bottom:3px solid var(--primary);
+  padding:14px 24px;
+  display:flex; align-items:center; justify-content:space-between;
+  position:sticky; top:0; z-index:100;
+  box-shadow:0 4px 20px rgba(59,63,160,0.15);
+}
+.logo { display:flex; align-items:center; gap:10px; }
+.logo-emoji { font-size:2rem; }
+.logo h1 { font-size:1.5rem; font-weight:900; color:var(--primary); }
+.logo p  { font-size:.75rem; color:var(--primary-dark); opacity:.7; }
+.cart-btn {
+  background:var(--primary); color:#fff;
+  border:none; padding:10px 20px; border-radius:50px;
+  font-family:'Cairo',sans-serif; font-weight:700; font-size:.95rem;
+  cursor:pointer; display:flex; align-items:center; gap:8px; transition:.2s;
+}
+.cart-btn:hover { background:var(--primary-dark); transform:scale(1.04); }
+.badge {
+  background:var(--red); color:#fff; border-radius:50%;
+  width:20px; height:20px; font-size:.7rem; font-weight:900;
+  display:flex; align-items:center; justify-content:center;
+}
+
+/* HERO */
+.hero { text-align:center; padding:36px 20px 16px;
+  background:radial-gradient(ellipse at 50% 0%,rgba(59,63,160,.07) 0%,transparent 70%); }
+.hero h2 { font-size:1.9rem; font-weight:900; color:var(--primary); }
+.hero p  { color:var(--muted); margin-top:6px; }
+
+/* MENU GRID */
+.menu-grid {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr));
+  gap:16px; padding:24px; max-width:1200px; margin:0 auto;
+}
+.menu-card {
+  background:var(--card); border:1px solid rgba(59,63,160,0.15); border-radius:16px;
+  padding:18px; display:flex; flex-direction:column; gap:10px;
+  transition:.25s; position:relative; overflow:hidden;
+}
+.menu-card::after {
+  content:''; position:absolute; bottom:0; right:0;
+  width:100%; height:3px; background:var(--primary);
+  transform:scaleX(0); transform-origin:right; transition:transform .25s;
+}
+.menu-card:hover { border-color:var(--primary); background:var(--card2); transform:translateY(-2px); box-shadow:0 8px 30px rgba(59,63,160,.1); }
+.menu-card:hover::after { transform:scaleX(1); }
+.card-top { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+.card-emoji { font-size:1.9rem; }
+.card-name  { font-size:1rem; font-weight:800; color:var(--primary); flex:1; line-height:1.4; }
+.card-desc  { font-size:.8rem; color:var(--muted); line-height:1.7; }
+.card-bottom { display:flex; justify-content:space-between; align-items:center; margin-top:6px; }
+.price { font-size:1.15rem; font-weight:900; }
+.price span { font-size:.78rem; color:var(--muted); }
+.qty-row { display:flex; align-items:center; gap:8px; }
+.qty-btn {
+  width:28px; height:28px; border-radius:50%; border:2px solid var(--primary);
+  background:transparent; color:var(--primary); font-size:1rem; font-weight:700;
+  cursor:pointer; display:flex; align-items:center; justify-content:center; transition:.15s;
+}
+.qty-btn:hover { background:var(--primary); color:#fff; }
+.qty-num { min-width:18px; text-align:center; font-weight:700; }
+
+/* CART SIDEBAR */
+.overlay { position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:200; display:none; backdrop-filter:blur(4px); }
+.overlay.open { display:block; }
+.cart-panel {
+  position:fixed; left:0; top:0; bottom:0;
+  width:min(400px,95vw); background:#fff;
+  border-right:3px solid var(--primary); z-index:201;
+  display:flex; flex-direction:column;
+  transform:translateX(-100%); transition:transform .35s cubic-bezier(.4,0,.2,1);
+}
+.cart-panel.open { transform:translateX(0); }
+.cart-hdr {
+  padding:18px 20px; border-bottom:1px solid rgba(59,63,160,.2);
+  display:flex; justify-content:space-between; align-items:center;
+}
+.cart-hdr h3 { font-size:1.15rem; font-weight:800; color:var(--primary); }
+.close-btn { background:none; border:none; color:var(--muted); font-size:1.6rem; cursor:pointer; line-height:1; }
+.cart-items { flex:1; overflow-y:auto; padding:16px 18px; display:flex; flex-direction:column; gap:10px; }
+.ci {
+  background:var(--card2); border-radius:10px; padding:12px 14px; border:1px solid rgba(59,63,160,0.1);
+  display:flex; justify-content:space-between; align-items:center; gap:10px;
+}
+.ci-left { flex:1; }
+.ci-name { font-size:.9rem; font-weight:700; color:var(--gold); }
+.ci-price { font-size:.8rem; color:var(--muted); margin-top:2px; }
+.ci-remove { background:none; border:none; color:var(--red); font-size:1.2rem; cursor:pointer; }
+.cart-footer { padding:18px 20px; border-top:1px solid rgba(59,63,160,.2); display:flex; flex-direction:column; gap:14px; }
+.total-row { display:flex; justify-content:space-between; font-size:1.1rem; font-weight:800; }
+.total-row span:last-child { color:var(--primary); }
+.name-input {
+  width:100%; padding:12px 14px; border-radius:10px;
+  border:1.5px solid rgba(59,63,160,0.25); background:#fff;
+  color:var(--text); font-family:'Cairo',sans-serif; font-size:.95rem;
+  outline:none; transition:border .2s; text-align:right;
+}
+.name-input:focus { border-color:var(--primary); }
+.order-btn {
+  width:100%; padding:13px; border-radius:12px;
+  background:var(--primary); color:#fff; border:none;
+  font-family:'Cairo',sans-serif; font-weight:800; font-size:1.05rem;
+  cursor:pointer; transition:.2s;
+}
+.order-btn:hover:not(:disabled) { background:var(--primary-dark); }
+.order-btn:disabled { opacity:.5; cursor:not-allowed; }
+.empty-cart { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; color:var(--muted); }
+.empty-cart .big { font-size:3rem; }
+
+/* SUCCESS MODAL */
+.modal-bg {
+  position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:400;
+  display:none; align-items:center; justify-content:center; backdrop-filter:blur(6px);
+}
+.modal-bg.open { display:flex; }
+.modal {
+  background:#fff; border:2px solid var(--primary); border-radius:20px;
+  padding:36px 32px; text-align:center; max-width:380px; width:90%;
+  animation:popIn .4s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes popIn { from{transform:scale(.6);opacity:0} to{transform:scale(1);opacity:1} }
+.modal h3 { font-size:1.4rem; font-weight:900; color:var(--primary); margin-bottom:8px; }
+.modal p  { color:#555; margin-bottom:20px; }
+.modal-num { font-size:2.5rem; font-weight:900; color:var(--primary); }
+.modal-close { background:var(--primary); color:#fff; border:none; padding:10px 28px; border-radius:50px; font-family:'Cairo',sans-serif; font-weight:700; cursor:pointer; font-size:1rem; margin-top:20px; }
+
+
+.ready-modal { border-color:var(--primary); box-shadow:0 0 60px rgba(59,63,160,.25); }
+.ready-anim  { font-size:4.5rem; display:inline-block; animation:bounce .55s ease-in-out infinite alternate; }
+@keyframes bounce { from{transform:translateY(0) scale(1)} to{transform:translateY(-14px) scale(1.2)} }
+.ready-num   { color:var(--primary); font-size:2.8rem; margin:10px 0; }
+.ready-close { background:var(--primary); margin-top:16px; }
+.ready-close:hover { background:var(--primary-dark); }
+
+/* DOT indicator */
+.live-dot { width:8px; height:8px; border-radius:50%; background:var(--primary); display:inline-block; animation:pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
+.live-row { display:flex; align-items:center; gap:6px; font-size:.78rem; color:var(--primary); justify-content:center; margin-top:6px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <img src="/static/logo.jpg" alt="GAD" style="height:52px;border-radius:8px;border:2px solid var(--primary);">
+    <div>
+      <h1>جاد GAD</h1>
+      <p>اطلب طازج — يوصل سريع</p>
+    </div>
+  </div>
+  <button class="cart-btn" onclick="openCart()">
+    🛒 سلة الطلب
+    <span class="badge" id="cartBadge">0</span>
+  </button>
+</header>
+
+<div class="hero">
+  <h2>🌊 اختار وجبتك دلوقتي</h2>
+  <p>قرمشة مضمونة في كل قطعة</p>
+  <div class="live-row"><span class="live-dot"></span> متصل مباشرةً</div>
+</div>
+
+<div class="menu-grid">
+  {% for item in menu %}
+  <div class="menu-card" id="card-{{ item.id }}">
+    <div class="card-top">
+      <span class="card-name">{{ item.name }}</span>
+      <span class="card-emoji">{{ item.emoji }}</span>
+    </div>
+    <div class="card-desc">{{ item.desc }}</div>
+    <div class="card-bottom">
+      <div class="price">{{ item.price }} <span>جنيه</span></div>
+      <div class="qty-row">
+        <button class="qty-btn" onclick="changeQty({{ item.id }}, -1)">−</button>
+        <span class="qty-num" id="qty-{{ item.id }}">0</span>
+        <button class="qty-btn" onclick="changeQty({{ item.id }}, 1)">+</button>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- OVERLAY + CART -->
+<div class="overlay" id="overlay" onclick="closeCart()"></div>
+<div class="cart-panel" id="cartPanel">
+  <div class="cart-hdr">
+    <h3>🛒 طلبك</h3>
+    <button class="close-btn" onclick="closeCart()">✕</button>
+  </div>
+  <div class="cart-items" id="cartItems"></div>
+  <div class="cart-footer" id="cartFooter" style="display:none">
+    <div class="total-row"><span>الإجمالي</span><span id="totalPrice">0 جنيه</span></div>
+    <input class="name-input" id="customerName" type="text" placeholder="✏️ اكتب اسمك هنا..." />
+    <button class="order-btn" id="orderBtn" onclick="submitOrder()">✅ تأكيد الطلب</button>
+  </div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <div style="font-size:3rem">✅</div>
+    <h3>اتقبل طلبك!</h3>
+    <p>رقم طلبك</p>
+    <div class="modal-num" id="modalOrderNum">#0</div>
+    <p style="margin-top:8px;font-size:.85rem">الكاشير شايف طلبك دلوقتي 👀</p>
+    <button class="modal-close" onclick="closeModal()">تمام 👌</button>
+  </div>
+</div>
+
+<!-- ORDER READY MODAL -->
+<div class="modal-bg" id="readyModalBg">
+  <div class="modal ready-modal">
+    <div class="ready-anim">🍗</div>
+    <h3 style="color:var(--primary);font-size:1.7rem;margin-top:8px">طلبك جاهز! 🎉</h3>
+    <p style="color:var(--muted);margin-top:6px;margin-bottom:8px">تفضل استلم طلبك من الكاشير</p>
+    <div class="modal-num ready-num" id="readyOrderNum">#0</div>
+    <button class="modal-close ready-close" onclick="closeReadyModal()">استلمت ✅</button>
+  </div>
+</div>
+
+<script>
+const MENU = {{ menu | tojson }};
+const cart = {};     // id -> qty
+const socket = io();
+
+socket.on('connect',    () => console.log('🟢 Socket connected'));
+socket.on('disconnect', () => console.log('🔴 Socket disconnected'));
+
+socket.on('order_confirmed', data => {
+  document.getElementById('modalOrderNum').textContent = '#' + data.order_id;
+  document.getElementById('modalBg').classList.add('open');
+  clearCart();
+});
+socket.on('order_error', data => alert('خطأ: ' + data.message));
+
+function changeQty(id, delta) {
+  cart[id] = Math.max(0, (cart[id] || 0) + delta);
+  if (cart[id] === 0) delete cart[id];
+  document.getElementById('qty-' + id).textContent = cart[id] || 0;
+  renderCart();
+}
+
+function renderCart() {
+  const ids = Object.keys(cart);
+  const badge = document.getElementById('cartBadge');
+  const total = ids.reduce((s, id) => s + MENU.find(m=>m.id==id).price * cart[id], 0);
+  badge.textContent = ids.reduce((s,id)=>s+cart[id],0);
+
+  const box = document.getElementById('cartItems');
+  const footer = document.getElementById('cartFooter');
+
+  if (!ids.length) {
+    box.innerHTML = `<div class="empty-cart"><div class="big">🛒</div><span>السلة فارغة</span></div>`;
+    footer.style.display = 'none'; return;
+  }
+  footer.style.display = 'flex';
+  document.getElementById('totalPrice').textContent = total + ' جنيه';
+
+  box.innerHTML = ids.map(id => {
+    const item = MENU.find(m=>m.id==id);
+    return `<div class="ci">
+      <div class="ci-left">
+        <div class="ci-name">${item.emoji} ${item.name}</div>
+        <div class="ci-price">${cart[id]} × ${item.price} = ${cart[id]*item.price} جنيه</div>
+      </div>
+      <button class="ci-remove" onclick="removeItem(${id})">🗑</button>
+    </div>`;
+  }).join('');
+}
+
+function removeItem(id) {
+  delete cart[id];
+  document.getElementById('qty-' + id).textContent = 0;
+  renderCart();
+}
+
+function clearCart() {
+  Object.keys(cart).forEach(id => {
+    delete cart[id];
+    document.getElementById('qty-' + id).textContent = 0;
+  });
+  renderCart();
+  closeCart();
+}
+
+function openCart()  { document.getElementById('cartPanel').classList.add('open'); document.getElementById('overlay').classList.add('open'); }
+function closeCart() { document.getElementById('cartPanel').classList.remove('open'); document.getElementById('overlay').classList.remove('open'); }
+
+function submitOrder() {
+  const name = document.getElementById('customerName').value.trim();
+  if (!name) { document.getElementById('customerName').focus(); return; }
+  const ids = Object.keys(cart);
+  if (!ids.length) return;
+  const items = ids.map(id => {
+    const m = MENU.find(m=>m.id==id);
+    return { id: Number(id), name: m.name, price: m.price, qty: cart[id], emoji: m.emoji };
+  });
+  document.getElementById('orderBtn').disabled = true;
+  socket.emit('place_order', { customer_name: name, items });
+  setTimeout(() => document.getElementById('orderBtn').disabled = false, 3000);
+}
+
+function closeModal() { document.getElementById('modalBg').classList.remove('open'); }
+
+
+// ── Sound Engine ──────────────────────────────────────────────────────────────
+function playNewOrderSound() {
+  // Cashier new-order: double ding-dong
+  try {
+    const ctx = new AudioContext();
+    [[880,0,0.15],[660,0.18,0.15],[880,0.36,0.15],[660,0.54,0.25]].forEach(([f,t,d]) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0, ctx.currentTime+t);
+      g.gain.linearRampToValueAtTime(0.5, ctx.currentTime+t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+t+d);
+      o.start(ctx.currentTime+t); o.stop(ctx.currentTime+t+d+0.05);
+    });
+  } catch(e){}
+}
+
+function playReadySound() {
+  // Customer order-ready: triumphant ascending fanfare
+  try {
+    const ctx = new AudioContext();
+    const notes = [
+      [523.25,0,0.12],[659.25,0.13,0.12],[783.99,0.26,0.12],
+      [1046.5,0.39,0.35],[783.99,0.6,0.1],[1046.5,0.72,0.5]
+    ];
+    notes.forEach(([f,t,d]) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'triangle'; o.frequency.value = f;
+      g.gain.setValueAtTime(0, ctx.currentTime+t);
+      g.gain.linearRampToValueAtTime(0.55, ctx.currentTime+t+0.03);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+t+d);
+      o.start(ctx.currentTime+t); o.stop(ctx.currentTime+t+d+0.05);
+    });
+    // harmony layer
+    setTimeout(() => {
+      const o2 = ctx.createOscillator(), g2 = ctx.createGain();
+      o2.connect(g2); g2.connect(ctx.destination);
+      o2.type = 'sine'; o2.frequency.value = 1318.5;
+      g2.gain.setValueAtTime(0.2, ctx.currentTime);
+      g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.8);
+      o2.start(); o2.stop(ctx.currentTime+0.85);
+    }, 720);
+  } catch(e){}
+}
+
+// Browser notification permission
+if (Notification && Notification.permission === 'default') {
+  Notification.requestPermission();
+}
+function sendBrowserNotif(title, body, icon='🍗') {
+  if (Notification && Notification.permission === 'granted') {
+    new Notification(title, { body, icon: '/static/icon.png' });
+  }
+}
+
+// ── order_ready event ─────────────────────────────────────────────────────────
+socket.on('order_ready', data => {
+  document.getElementById('readyOrderNum').textContent = '#' + data.order_id;
+  document.getElementById('readyModalBg').classList.add('open');
+  playReadySound();
+  sendBrowserNotif('🍗 طلبك جاهز!', 'تفضل استلم طلب رقم #' + data.order_id);
+});
+
+function closeReadyModal() {
+  document.getElementById('readyModalBg').classList.remove('open');
+}
+
+renderCart();
+</script>
+</body>
+</html>
